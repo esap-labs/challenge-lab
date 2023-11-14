@@ -35,61 +35,59 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
 
-    for i in range(0, 10):
+    # Start timer
+    t = time.time_ns()
 
-        # Start timer
-        t = time.time_ns()
+    # Train the model
+    model.train()
+    train_loss = 0
 
-        # Train the model
-        model.train()
-        train_loss = 0
+    # Batch Loop
+    for i, (images, labels) in enumerate(tqdm(train_loader, leave=False)):
 
-        # Batch Loop
-        for i, (images, labels) in enumerate(tqdm(train_loader, leave=False)):
+        # Move the data to the device (CPU or GPU)
+        images = images.to(device)
+        labels = labels.to(device)
 
-            # Move the data to the device (CPU or GPU)
-            images = images.to(device)
-            labels = labels.to(device)
+        # Zero the parameter gradients
+        optimizer.zero_grad()
 
-            # Zero the parameter gradients
-            optimizer.zero_grad()
+        # Forward pass
+        outputs = model(images)
 
-            # Forward pass
-            outputs = model(images)
+        # Compute the loss
+        loss = criterion(outputs, labels)
 
-            # Compute the loss
-            loss = criterion(outputs, labels)
+        # Backward pass
+        loss.backward()
 
-            # Backward pass
-            loss.backward()
+        # Update the parameters
+        optimizer.step()
 
-            # Update the parameters
-            optimizer.step()
+        # Accumulate the loss
+        train_loss = train_loss + loss.item()
 
-            # Accumulate the loss
-            train_loss = train_loss + loss.item()
+    # Test the model
+    model.eval()
+    correct = 0
+    total = 0
 
-        # Test the model
-        model.eval()
-        correct = 0
-        total = 0
+    # Batch Loop
+    for images, labels in tqdm(test_loader, leave=False):
 
-        # Batch Loop
-        for images, labels in tqdm(test_loader, leave=False):
+        # Move the data to the device (CPU or GPU)
+        images = images.to(device)
+        labels = labels.to(device)
 
-            # Move the data to the device (CPU or GPU)
-            images = images.to(device)
-            labels = labels.to(device)
+        # Forward pass
+        outputs = model(images)
 
-            # Forward pass
-            outputs = model(images)
+        # Get the predicted class from the maximum value in the output-list of class scores
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
 
-            # Get the predicted class from the maximum value in the output-list of class scores
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
+        # Accumulate the number of correct classifications
+        correct += (predicted == labels).sum().item()
 
-            # Accumulate the number of correct classifications
-            correct += (predicted == labels).sum().item()
-
-        # Print the epoch statistics
-        print("Training Loss: {:.4f}, Test Accuracy: {:.2f}%, Time Taken: {:.2f}s".format(train_loss / len(train_loader), 100 * correct / total, (time.time_ns() - t) / 1e9))
+    # Print the epoch statistics
+    print("Training Loss: {:.4f}, Test Accuracy: {:.2f}%, Time Taken: {:.2f}s".format(train_loss / len(train_loader), 100 * correct / total, (time.time_ns() - t) / 1e9))
