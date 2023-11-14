@@ -1,13 +1,11 @@
-from random import Random
 import time
 
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import RandomSampler
 from torchvision import datasets, transforms
 from tqdm import tqdm
-from utils.models import LinearNet, ConvNet
+from utils.models import ConvNet
 
 if __name__ == '__main__':
 
